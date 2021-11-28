@@ -30,7 +30,7 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "name": "express-router-extended",
+  "name": "express-router-extended-v1",
   "description": "Easy route grouping for ExpressJS based on Laravel's router builder.",
   "author": "Thiago Dias",
   "module": "dist/express-router-extended.esm.js",
