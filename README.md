@@ -27,9 +27,7 @@ const router = ExpressRouterExtended.build()
 
 let visits = 0;
 const visitsMiddleware = (_req: Request, response: Response, next: () => void) => {
-    response.send({
-        message: `This page was accessed ${++visits} time(s)`
-    })
+    console.log(`This page was accessed ${++visits} time(s)`)
     next()
 }
 
