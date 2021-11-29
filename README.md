@@ -7,20 +7,20 @@ Add extra functionalities to express router, such as routing and middleware grou
 NPM
 
 ```sh
-$ npm install express-router-extended-v1
+$ npm install express-router-extended
 ```
 
 Yarn
 
 ```sh
-$ yarn add express-router-extended-v1
+$ yarn add express-router-extended
 ```
 
 ## How to Use
 
 ```ts
 import express, { Response, Request } from 'express';
-import ExpressRouterExtended from 'express-router-extended-v1';
+import ExpressRouterExtended from 'express-router-extended';
 
 const expressInstance = express()
 const router = ExpressRouterExtended.build()
