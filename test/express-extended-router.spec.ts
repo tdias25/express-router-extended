@@ -93,9 +93,9 @@ describe('Express Router Extended flow', () => {
             function childGroupMiddleware2() { },
         ]
 
-        expressRouterExtended.group({ prefix: '/parent-group', middlewares: [...parentGroupMiddlewares] }, (router: RouterInterface) => {
+        expressRouterExtended.group({ prefix: '/parent-group', middlewares: parentGroupMiddlewares }, (router: RouterInterface) => {
 
-            router.group({ prefix: '/child-group', middlewares: [...childGroupMiddlewares] }, (router: RouterInterface) => {
+            router.group({ prefix: '/child-group', middlewares: childGroupMiddlewares }, (router: RouterInterface) => {
                 router.get('/second-child-route', () => null)
             })
         })
