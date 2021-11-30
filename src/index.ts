@@ -1,13 +1,11 @@
 import { IRouter as ExpressRouterInterface, Router as ExpressRouter } from 'express';
 
-type RequestMethods = 'get' | 'post' | 'put' | 'patch' | 'delete';
-
 type GroupRouter = {
   group: (routeGroup: RouteGroupParams, callback: GroupCallback) => void;
   exportRouter: () => ExpressRouterInterface;
 }
 export type RouterInterface = ExpressRouterInterface & GroupRouter;
-type GroupCallback = (router: RouterInterface) => void;
+export type GroupCallback = (router: RouterInterface) => void;
 
 type RouteGroupParams = {
   prefix: string;
@@ -22,7 +20,6 @@ export default class ExpressRouterExtended {
   }
 
   public static build(): RouterInterface {
-
     const expressRouterExtended = new ExpressRouterExtended();
     const proxyHandler = {
       get: (_targetObject: object, property: PropertyKey) => {
@@ -38,26 +35,27 @@ export default class ExpressRouterExtended {
     groupCallback(this.makeGroupedRouteProxy(routeGroupParams));
   };
 
-  private handleExpressFunction(value: Function | RequestMethods, groupPath: string, groupMiddlewares: CallableFunction[] = []) {
-    if (typeof value === 'function') {
+  private handleExpressCall(property: PropertyKey, routeGroupParams: RouteGroupParams) {
+    const expressValue = Reflect.get(this.expressRouter, property)
+    if (typeof expressValue === 'function') {
       return (path: string, ...routeHandlers: CallableFunction[]) => {
-        value.call(this.expressRouter, this.mergePaths(groupPath, path), [...groupMiddlewares, ...routeHandlers]);
+        expressValue.call(this.expressRouter, this.mergePaths(routeGroupParams.prefix, path), [...(routeGroupParams.middlewares ?? []), ...routeHandlers]);
       }
     }
-    return this.expressRouter[value]
+    return expressValue
   }
 
-  private handleGroupFunction(routeGroupParams: RouteGroupParams) {
-
-    return (routeGroup: RouteGroupParams, groupCallback: GroupCallback) => {
-
-      const newRouteGroupParams = {
-        prefix: this.mergePaths(routeGroupParams.prefix, routeGroup.prefix),
-        middlewares: [...(routeGroupParams?.middlewares ?? []), ...(routeGroup?.middlewares ?? [])]
+  private handleGroupFunction(property: PropertyKey, routeGroupParams: RouteGroupParams) {
+    if (property === ExpressRouterExtended.GROUP_FUNCTION_NAME) {
+      return (routeGroup: RouteGroupParams, groupCallback: GroupCallback) => {
+        const newRouteGroupParams = {
+          prefix: this.mergePaths(routeGroupParams.prefix, routeGroup.prefix),
+          middlewares: [...(routeGroupParams?.middlewares ?? []), ...(routeGroup?.middlewares ?? [])]
+        }
+        return this.group(newRouteGroupParams, groupCallback)
       }
-
-      return this.group(newRouteGroupParams, groupCallback)
     }
+    return Reflect.get(this, property)
   }
 
   private mergePaths(parentPath: string, childPath: string): string {
@@ -66,15 +64,11 @@ export default class ExpressRouterExtended {
   }
 
   private makeGroupedRouteProxy(routeGroupParams: RouteGroupParams): RouterInterface {
-
     const proxyHandler = {
       get: (_targetObject: object, property: PropertyKey) => {
-        if (property in this) {
-          if (property === ExpressRouterExtended.GROUP_FUNCTION_NAME) return this.handleGroupFunction(routeGroupParams)
-          return Reflect.get(this, property)
-        }
-        const expressFunction = Reflect.get(this.expressRouter, property);
-        return this.handleExpressFunction(expressFunction, routeGroupParams.prefix, routeGroupParams.middlewares)
+        return (property in this)
+          ? this.handleGroupFunction(property, routeGroupParams)
+          : this.handleExpressCall(property, routeGroupParams)
       }
     }
     return new Proxy<RouterInterface>(this as any, proxyHandler)
